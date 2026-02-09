@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Militarians Today | FMNHS Online Bulletin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --fmnsh-blue: #1a4b8c; --fmnsh-gold: #ffcc00; }
+        body { 
+            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('fmnhs.jpg'); 
+            background-size: cover; background-attachment: fixed; background-position: center;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+        
+        /* Ticker & Navbar */
+        .ticker-wrap { background: var(--fmnsh-gold); color: #000; padding: 10px 0; font-weight: bold; border-bottom: 2px solid var(--fmnsh-blue); }
+        .navbar { background-color: var(--fmnsh-blue) !important; border-bottom: 4px solid var(--fmnsh-gold); }
+        .school-logo { width: 50px; height: 50px; background: white; border-radius: 50%; padding: 2px; margin-right: 10px; }
+
+        /* Announcement Cards */
+        .announcement-card { border: none; border-left: 8px solid var(--fmnsh-blue); border-radius: 12px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 30px; transition: 0.3s; }
+        .status-badge { font-weight: bold; font-size: 0.75rem; padding: 5px 12px; border-radius: 20px; text-transform: uppercase; }
+        .status-upcoming { background: #28a745; color: white; } /* NEW */
+        .status-today { background: #007bff; color: white; }    /* CURRENT */
+        .status-archived { background: #6c757d; color: white; } /* OLD */
+
+        /* Comments */
+        .comment-section { background: #f8f9fa; padding: 20px; border-top: 1px solid #eee; }
+        .comment-bubble { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eef; }
+        .reply-bubble { background: #e7f3ff; border-left: 4px solid var(--fmnsh-blue); padding: 10px; margin-left: 25px; border-radius: 5px; font-size: 0.9rem; margin-top: 8px; }
+        
+        /* Utilities */
+        .hidden { display: none; }
+        .offline-notice { background: #dc3545; color: white; text-align: center; padding: 5px; font-weight: bold; display: none; }
+        .verified-badge { color: #1d9bf0; margin-left: 5px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div id="offlineNotice" class="offline-notice">⚠️ OFFLINE MODE: Showing last saved data.</div>
+
+<div class="ticker-wrap">
+    <marquee id="newsTicker">Welcome to Militarians Today: The Official Online Publication of Fort Magsaysay National High School.</marquee>
+</div>
+
+<nav class="navbar navbar-dark sticky-top shadow">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center fw-bold" href="#" onclick="showSection('publicFeed')">
+            <img src="logofmnhs.jpg" alt="Logo" class="school-logo"> 
+            MILITARIANS TODAY
+        </a>
+        <button class="btn btn-warning btn-sm fw-bold shadow-sm" id="navBtn" onclick="toggleAuth()">TEACHER LOGIN</button>
+    </div>
+</nav>
+
+<div class="container mt-4 mb-5">
+    
+    <section id="publicFeed">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-dark">CAMPUS ANNOUNCEMENTS</h2>
+            <p class="text-muted">Stay updated with the latest news from FMNHS</p>
+            <div class="col-md-6 mx-auto">
+                <input type="text" id="searchBar" class="form-control" placeholder="🔍 Search announcements..." onkeyup="renderAnnouncements()">
+            </div>
+        </div>
+        <div id="announcementsList" class="row"></div>
+    </section>
+
+    <section id="loginSection" class="hidden">
+        <div class="card shadow-lg p-4 mx-auto border-0" style="max-width: 400px; margin-top: 50px;">
+            <div class="text-center mb-4">
+                <i class="fas fa-user-shield fa-3x text-primary mb-2"></i>
+                <h5 class="fw-bold">Teacher Authentication</h5>
+                <p class="small text-muted">Restricted Access for Authorized Personnel Only</p>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Username</label>
+                <input type="text" id="adminUser" class="form-control" placeholder="Enter username">
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Password</label>
+                <input type="password" id="adminPass" class="form-control" placeholder="Enter password">
+            </div>
+            <button class="btn btn-primary w-100 py-2 fw-bold" onclick="login()">SECURE LOGIN</button>
+            <div id="loginError" class="text-danger small mt-2 text-center"></div>
+        </div>
+    </section>
+
+    <section id="teacherDashboard" class="hidden">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <div>
+                <h2 class="fw-bold mb-0">Teacher Dashboard</h2>
+                <span class="badge bg-primary">Logged in as: <span id="currentUserDisplay"></span></span>
+            </div>
+            <button class="btn btn-outline-danger btn-sm fw-bold" onclick="logout()">LOGOUT</button>
+        </div>
+
+        <div class="card shadow-sm border-0 p-4 mb-5">
+            <h5 class="fw-bold mb-3 text-primary"><i class="fas fa-plus-circle"></i> Create/Edit Announcement</h5>
+            <form id="postForm">
+                <input type="hidden" id="editKey">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="small fw-bold">Title</label><input type="text" id="title" class="form-control" required></div>
+                    <div class="col-md-3"><label class="small fw-bold">Event/Deadline Date</label><input type="date" id="eventDate" class="form-control" required></div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold">Type</label>
+                        <select id="category" class="form-select">
+                            <option>General Announcement</option>
+                            <option>Academic Advisory</option>
+                            <option>School Activity</option>
+                        </select>
+                    </div>
+                    <div class="col-12"><label class="small fw-bold">Announcement Details</label><textarea id="content" class="form-control" rows="4" required></textarea></div>
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-secondary me-2 hidden" id="cancelBtn" onclick="resetForm()">Cancel</button>
+                        <button type="submit" class="btn btn-success px-5 fw-bold" id="saveBtn">PUBLISH TO CLOUD</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <h5 class="fw-bold mb-3">Management History</h5>
+        <div id="adminPostsList" class="list-group shadow-sm"></div>
+    </section>
+</div>
+
+<script>
+    // --- 1. CONFIGURATION ---
+    const BASE_URL = "https://militarianstoday-default-rtdb.firebaseio.com/"; // Replace with your actual Firebase URL
+    const teacherAccounts = {
+        "admin_principal": "fmnsh2026",
+        "ict_dept": "ict_pass_123",
+        "teacher_militar": "militar2026"
+    };
+
+    let announcementsData = {};
+    let loggedInUser = "";
+
+    // --- 2. CORE FUNCTIONS ---
+
+    // Fetch from Firebase (with Offline Cache)
+    async function fetchPosts() {
+        try {
+            const response = await fetch(BASE_URL + "posts.json");
+            announcementsData = await response.json() || {};
+            localStorage.setItem('fmnsh_cache', JSON.stringify(announcementsData));
+            document.getElementById('offlineNotice').style.display = 'none';
+        } catch (e) {
+            announcementsData = JSON.parse(localStorage.getItem('fmnsh_cache')) || {};
+            document.getElementById('offlineNotice').style.display = 'block';
+        }
+        renderAnnouncements();
+        renderAdminPosts();
+    }
+
+    // Hybrid Status Logic (Automatic Labeling)
+    function getStatusInfo(eventDate) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const target = new Date(eventDate);
+        target.setHours(0,0,0,0);
+
+        if (target > today) return { text: "Upcoming", class: "status-upcoming" };
+        if (target.getTime() === today.getTime()) return { text: "Today", class: "status-current" };
+        return { text: "Archived", class: "status-old" };
+    }
+
+    // --- 3. UI RENDERING ---
+
+    function renderAnnouncements() {
+        const list = document.getElementById('announcementsList');
+        const search = document.getElementById('searchBar').value.toLowerCase();
+        list.innerHTML = "";
+
+        Object.keys(announcementsData).reverse().forEach(key => {
+            const p = announcementsData[key];
+            if (p.title.toLowerCase().includes(search) || p.content.toLowerCase().includes(search)) {
+                const status = getStatusInfo(p.eventDate);
+                
+                let commentsHtml = (p.comments || []).map((c, i) => `
+                    <div class="comment-bubble">
+                        <small class="fw-bold">Student Question:</small>
+                        <p class="mb-1">${c.text}</p>
+                        ${loggedInUser ? `<button class="btn btn-sm btn-link p-0 text-primary" onclick="replyComment('${key}', ${i})">Reply as Teacher</button>` : ''}
+                        ${c.reply ? `<div class="reply-bubble"><strong><i class="fas fa-reply"></i></strong> ${c.reply}</div>` : ''}
+                    </div>
+                `).join('');
+
+                list.innerHTML += `
+                <div class="col-12">
+                    <div class="card announcement-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="status-badge ${status.class}">${status.text}</span>
+                                <span class="text-muted small fw-bold text-uppercase">${p.category}</span>
+                            </div>
+                            <h3 class="fw-bold">${p.title}</h3>
+                            <p style="white-space: pre-wrap;">${p.content}</p>
+                            <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                                <small class="text-muted">Posted by: <strong>${p.teacher}</strong> <i class="fas fa-check-circle verified-badge"></i></small>
+                                <small class="text-muted">Target Date: ${p.eventDate}</small>
+                            </div>
+                        </div>
+                        <div class="comment-section">
+                            <h6 class="fw-bold mb-3"><i class="far fa-comments"></i> Discussion</h6>
+                            <div id="comments-box-${key}">${commentsHtml}</div>
+                            <div class="input-group mt-3">
+                                <input type="text" id="input-${key}" class="form-control form-control-sm" placeholder="Ask a question about this announcement...">
+                                <button class="btn btn-sm btn-primary" onclick="addComment('${key}')">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        });
+    }
+
+    // --- 4. TEACHER ACTIONS ---
+
+    function login() {
+        const u = document.getElementById('adminUser').value;
+        const p = document.getElementById('adminPass').value;
+        if (teacherAccounts[u] === p) {
+            loggedInUser = u.toUpperCase();
+            document.getElementById('currentUserDisplay').innerText = loggedInUser;
+            document.getElementById('navBtn').innerText = "LOGOUT";
+            showSection('teacherDashboard');
+        } else {
+            document.getElementById('loginError').innerText = "Access Denied: Invalid Credentials.";
+        }
+    }
+
+    function logout() {
+        loggedInUser = "";
+        document.getElementById('navBtn').innerText = "TEACHER LOGIN";
+        showSection('publicFeed');
+    }
+
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('editKey').value;
+        const postData = {
+            title: document.getElementById('title').value,
+            eventDate: document.getElementById('eventDate').value,
+            category: document.getElementById('category').value,
+            content: document.getElementById('content').value,
+            teacher: loggedInUser,
+            datePosted: new Date().toLocaleString(),
+            comments: key ? (announcementsData[key].comments || []) : []
+        };
+
+        const method = key ? "PUT" : "POST";
+        const url = key ? `${BASE_URL}posts/${key}.json` : `${BASE_URL}posts.json`;
+
+        await fetch(url, { method: method, body: JSON.stringify(postData) });
+        resetForm();
+        fetchPosts();
+        alert("Success: Cloud Updated!");
+    });
+
+    // --- 5. COMMENT LOGIC ---
+
+    async function addComment(postKey) {
+        const text = document.getElementById(`input-${postKey}`).value;
+        if (!text) return;
+        if (!announcementsData[postKey].comments) announcementsData[postKey].comments = [];
+        announcementsData[postKey].comments.push({ text: text, reply: "" });
+        await fetch(`${BASE_URL}posts/${postKey}.json`, { method: "PUT", body: JSON.stringify(announcementsData[postKey]) });
+        fetchPosts();
+    }
+
+    async function replyComment(postKey, index) {
+        const rep = prompt("Official Reply as Teacher:");
+        if (!rep) return;
+        announcementsData[postKey].comments[index].reply = `(Official Reply by ${loggedInUser}): ${rep}`;
+        await fetch(`${BASE_URL}posts/${postKey}.json`, { method: "PUT", body: JSON.stringify(announcementsData[postKey]) });
+        fetchPosts();
+    }
+
+    // --- 6. UTILS ---
+
+    function showSection(id) {
+        document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    function toggleAuth() {
+        if (loggedInUser) logout();
+        else showSection('loginSection');
+    }
+
+    function renderAdminPosts() {
+        const list = document.getElementById('adminPostsList');
+        list.innerHTML = "";
+        Object.keys(announcementsData).reverse().forEach(key => {
+            const p = announcementsData[key];
+            list.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center">
+                <div><strong>${p.title}</strong><br><small>${p.eventDate} | By: ${p.teacher}</small></div>
+                <div>
+                    <button class="btn btn-sm btn-info text-white" onclick="editPost('${key}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="deletePost('${key}')"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`;
+        });
+    }
+
+    function editPost(key) {
+        const p = announcementsData[key];
+        document.getElementById('editKey').value = key;
+        document.getElementById('title').value = p.title;
+        document.getElementById('eventDate').value = p.eventDate;
+        document.getElementById('category').value = p.category;
+        document.getElementById('content').value = p.content;
+        document.getElementById('saveBtn').innerText = "UPDATE POST";
+        document.getElementById('cancelBtn').classList.remove('hidden');
+        window.scrollTo(0,0);
+    }
+
+    function resetForm() {
+        document.getElementById('postForm').reset();
+        document.getElementById('editKey').value = "";
+        document.getElementById('saveBtn').innerText = "PUBLISH TO CLOUD";
+        document.getElementById('cancelBtn').classList.add('hidden');
+    }
+
+    async function deletePost(key) {
+        if(confirm("Permanently delete this announcement?")) {
+            await fetch(`${BASE_URL}posts/${key}.json`, { method: "DELETE" });
+            fetchPosts();
+        }
+    }
+
+    // Initial Load
+    fetchPosts();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
