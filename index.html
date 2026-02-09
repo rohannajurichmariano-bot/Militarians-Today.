@@ -31,7 +31,7 @@
         <a class="navbar-brand d-flex align-items-center fw-bold" href="#" onclick="showSection('publicFeed')">
             MILITARIANS TODAY
         </a>
-        <button class="btn btn-warning btn-sm fw-bold shadow-sm" id="navBtn" onclick="toggleAuth()">STAFF LOGIN</button>
+        <button class="btn btn-warning btn-sm fw-bold shadow-sm" id="navBtn" onclick="toggleAuth()">ADMIN LOGIN</button>
     </div>
 </nav>
 
@@ -39,7 +39,8 @@
     
     <section id="publicFeed">
         <div class="text-center mb-4">
-            <h2 class="fw-bold text-dark">CENTRALIZED SCHOOL ANNOUNCEMENTS</h2>
+            <h2 class="fw-bold text-dark">WELCOME TO MILITARIANS TODAY</h2>
+            <p class="text-muted">The Centralized Online Publication of Fort Magsaysay National High School</p>
             <div class="col-md-6 mx-auto mt-3">
                 <input type="text" id="searchBar" class="form-control" placeholder="🔍 Search official announcements..." onkeyup="renderAnnouncements()">
             </div>
@@ -47,13 +48,5 @@
         <div id="announcementsList" class="row"></div>
     </section>
 
-    <section id="loginSection" class="hidden">
-        <div class="card shadow-lg p-4 mx-auto border-0" style="max-width: 400px; margin-top: 50px;">
-            <div class="text-center mb-4">
-                <i class="fas fa-user-shield fa-3x text-primary mb-2"></i>
-                <h5 class="fw-bold">Personnel Authentication</h5>
-                <p class="small text-muted">Access restricted to FMNHS Staff & Administrators</p>
-            </div>
-            <div class="mb-3">
-                <label class="form-label small fw-bold">Username</label>
-                <input type="text"
+    
+    <section id="loginSection" class="hidden
